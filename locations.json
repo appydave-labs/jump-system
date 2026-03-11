@@ -1,0 +1,37 @@
+{
+  "meta": {
+    "version": "1.0",
+    "description": "Jump location registry — edit this file to manage your folder aliases",
+    "generated_aliases_path": "~/.config/jump/aliases-jump.zsh"
+  },
+  "locations": [
+    {
+      "key": "dev",
+      "path": "~/dev",
+      "jump": "jd",
+      "group": "root",
+      "description": "Development root"
+    },
+    {
+      "key": "clients",
+      "path": "~/dev/clients",
+      "jump": "jc",
+      "group": "root",
+      "description": "Client workspace root"
+    },
+    {
+      "key": "labs",
+      "path": "~/dev/labs",
+      "jump": "jlabs",
+      "group": "root",
+      "description": "Labs — experimental and collaborative repos"
+    },
+    {
+      "key": "jump-system",
+      "path": "~/dev/labs/jump-system",
+      "jump": "jjump",
+      "group": "labs",
+      "description": "Jump system repo"
+    }
+  ]
+}
