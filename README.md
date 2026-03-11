@@ -6,6 +6,7 @@ A lightweight folder navigation system for macOS. Define your important folders 
 jd        # → ~/dev
 jc        # → ~/dev/clients
 jlabs     # → ~/dev/labs
+jlist     # → show all locations as a table
 ```
 
 ---
@@ -135,6 +136,14 @@ Expected output: `jd is an alias for cd ~/dev`
 
 If `jd` isn't defined, check that `locations.json` contains an entry with `"jump": "jd"` and re-run Step 5.
 
+### Step 8 — Test jlist
+
+```bash
+source ~/.config/jump/aliases-jump.zsh && jlist
+```
+
+This prints a table of all your locations — alias, path, description. If it errors, confirm `jq` is installed and `~/.config/jump/locations.json` exists.
+
 ---
 
 ## Updating your locations
@@ -142,7 +151,8 @@ If `jd` isn't defined, check that `locations.json` contains an entry with `"jump
 1. Edit `locations.json`
 2. Run `./generate-aliases.sh --dry-run` to verify
 3. Run `./generate-aliases.sh`
-4. Run `source ~/.config/jump/aliases-jump.zsh` (or open a new terminal)
+4. Re-wire into shell (same command as Step 6 in installation)
+5. Run `source ~/.config/jump/aliases-jump.zsh && jlist` to confirm
 
 ---
 
