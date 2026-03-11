@@ -81,6 +81,13 @@ else
     exit 1
   fi
 
+  # auto-sync to oh-my-zsh custom folder so it never goes stale
+  OMZ_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+  if [[ -d "$OMZ_CUSTOM" ]]; then
+    cp "$OUTPUT_FILE" "$OMZ_CUSTOM/aliases-jump.zsh"
+    echo "Synced to oh-my-zsh: $OMZ_CUSTOM/aliases-jump.zsh"
+  fi
+
   echo "locations.json copied to: $CONFIG_DIR/locations.json"
   echo "Aliases written to: $OUTPUT_FILE ($ALIAS_COUNT aliases)"
   echo "Activate: source $OUTPUT_FILE"
