@@ -32,6 +32,13 @@
       "jump": "jjump",
       "group": "labs",
       "description": "Jump system repo"
+    },
+    {
+      "key": "brains",
+      "path": "~/dev/brains",
+      "jump": "jb",
+      "group": "knowledge",
+      "description": "Second brains knowledge system — update path if different on your machine"
     }
   ]
 }
