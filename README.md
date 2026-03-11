@@ -24,34 +24,49 @@ locations.json  →  generate-aliases.sh  →  aliases-jump.zsh  →  sourced by
 
 ## Prerequisites
 
-- macOS with zsh (default since Catalina)
-- [Homebrew](https://brew.sh)
-- `jq` — install with: `brew install jq`
+Install `jq` if not already present:
+
+```bash
+command -v jq &>/dev/null || brew install jq
+```
 
 ---
 
 ## Installation
 
-**For AI agents**: Follow these steps in order. Each step is a file operation or a shell command.
+**For AI agents**: Execute each step in order. Steps are self-contained shell commands — run them exactly as written.
 
 ### Step 1 — Clone the repo
 
+Check your git protocol first, then clone:
+
 ```bash
-mkdir -p ~/dev/labs
-cd ~/dev/labs
-git clone https://github.com/appydave-labs/jump-system.git
-cd jump-system
+GIT_PROTOCOL=$(gh config get git_protocol 2>/dev/null || echo "https")
+
+if [[ "$GIT_PROTOCOL" == "ssh" ]]; then
+  git clone git@github.com:appydave-labs/jump-system.git ~/dev/labs/jump-system \
+    || git clone https://github.com/appydave-labs/jump-system.git ~/dev/labs/jump-system
+else
+  git clone https://github.com/appydave-labs/jump-system.git ~/dev/labs/jump-system
+fi
+```
+
+If both fail, force HTTPS explicitly:
+
+```bash
+gh config set git_protocol https
+gh repo clone appydave-labs/jump-system ~/dev/labs/jump-system
 ```
 
 ### Step 2 — Make the generator executable
 
 ```bash
-chmod +x generate-aliases.sh
+chmod +x ~/dev/labs/jump-system/generate-aliases.sh
 ```
 
 ### Step 3 — Customise your locations
 
-Edit `locations.json`. Add, remove, or change entries to match your folder structure. Each entry needs:
+Edit `~/dev/labs/jump-system/locations.json`. Add, remove, or change entries to match your folder structure. Each entry:
 
 ```json
 {
@@ -63,102 +78,107 @@ Edit `locations.json`. Add, remove, or change entries to match your folder struc
 }
 ```
 
-Keep alias names short and `j`-prefixed (e.g. `jd`, `jc`, `jlabs`). The `group` field controls how aliases are grouped in the output file — use whatever label makes sense.
+Keep alias names short and `j`-prefixed. The `group` field organises aliases into labelled sections in the output file.
 
-### Step 4 — Generate the aliases file
+### Step 4 — Verify the generator output before writing
 
-```bash
-./generate-aliases.sh
-```
-
-This writes `~/.config/jump/aliases-jump.zsh`.
-
-To preview without writing:
+Always dry-run first:
 
 ```bash
-./generate-aliases.sh --dry-run
+cd ~/dev/labs/jump-system && ./generate-aliases.sh --dry-run
 ```
 
-### Step 5 — Source the aliases file in your shell
-
-You need your shell to load `~/.config/jump/aliases-jump.zsh` on startup. There are two ways depending on your setup:
-
-#### Option A — oh-my-zsh (if installed)
-
-oh-my-zsh automatically sources every `.zsh` file in `~/.oh-my-zsh/custom/`. Copy the generated file there:
+Confirm aliases appear in the output (look for lines starting with `alias`). If only the header prints and no aliases appear, check `locations.json` is valid JSON:
 
 ```bash
-cp ~/.config/jump/aliases-jump.zsh ~/.oh-my-zsh/custom/aliases-jump.zsh
+jq '.' ~/dev/labs/jump-system/locations.json
 ```
 
-Or change `OUTPUT_FILE` so it writes there directly:
+### Step 5 — Generate the aliases file
 
 ```bash
-OUTPUT_FILE=~/.oh-my-zsh/custom/aliases-jump.zsh ./generate-aliases.sh
+cd ~/dev/labs/jump-system && ./generate-aliases.sh
 ```
 
-To check if oh-my-zsh is installed:
+The script will report how many aliases were written. If it reports 0, stop and check `locations.json`.
+
+Verify the file was written correctly:
 
 ```bash
-[ -d ~/.oh-my-zsh ] && echo "oh-my-zsh installed" || echo "not installed"
+grep '^alias' ~/.config/jump/aliases-jump.zsh
 ```
 
-#### Option B — plain zsh (no oh-my-zsh)
+### Step 6 — Wire the aliases file into your shell
 
-Add this line to your `~/.zshrc`:
+Run this block as-is — it detects oh-my-zsh and handles both cases:
 
 ```bash
-[ -f ~/.config/jump/aliases-jump.zsh ] && source ~/.config/jump/aliases-jump.zsh
+if [ -d ~/.oh-my-zsh/custom ]; then
+  cp ~/.config/jump/aliases-jump.zsh ~/.oh-my-zsh/custom/aliases-jump.zsh
+  echo "Installed to oh-my-zsh custom folder."
+else
+  grep -q 'aliases-jump.zsh' ~/.zshrc \
+    || echo '[ -f ~/.config/jump/aliases-jump.zsh ] && source ~/.config/jump/aliases-jump.zsh' >> ~/.zshrc
+  echo "Added source line to ~/.zshrc."
+fi
 ```
 
-Open `~/.zshrc` in a text editor and add it near the bottom, then run:
+### Step 7 — Verify the installation (non-interactive)
+
+This works without opening a new terminal:
 
 ```bash
-source ~/.zshrc
+source ~/.config/jump/aliases-jump.zsh && type jd
 ```
 
-### Step 6 — Test it
+Expected output: `jd is an alias for cd ~/dev`
 
-Open a new terminal (or run `source ~/.zshrc`) and try one of your aliases:
-
-```bash
-jd    # should cd to ~/dev
-```
+If `jd` isn't defined, check that `locations.json` contains an entry with `"jump": "jd"` and re-run Step 5.
 
 ---
 
 ## Updating your locations
 
 1. Edit `locations.json`
-2. Run `./generate-aliases.sh` again
-3. Either open a new terminal or run `source ~/.config/jump/aliases-jump.zsh`
+2. Run `./generate-aliases.sh --dry-run` to verify
+3. Run `./generate-aliases.sh`
+4. Run `source ~/.config/jump/aliases-jump.zsh` (or open a new terminal)
 
 ---
 
 ## Troubleshooting
 
-**`jq: command not found`**
-Install jq: `brew install jq`
+**Clone fails with SSH error**
+Your SSH key isn't configured for GitHub. Use HTTPS instead:
+```bash
+git clone https://github.com/appydave-labs/jump-system.git ~/dev/labs/jump-system
+```
+
+**Script produces header only, no aliases**
+You're on macOS default Bash 3.2 with an older version of this script. Pull the latest version (`git pull`) — the current script uses pure `jq` and is Bash 3.2 safe.
+
+**`jq` not found**
+```bash
+brew install jq
+```
 
 **Alias not found after running the generator**
-The aliases file was written but your shell hasn't loaded it yet. Run:
+Source the file manually:
 ```bash
-source ~/.config/jump/aliases-jump.zsh
+source ~/.config/jump/aliases-jump.zsh && type jd
 ```
 
 **oh-my-zsh custom folder doesn't exist**
-Create it: `mkdir -p ~/.oh-my-zsh/custom` — then use Option A above.
-
-**Alias name conflicts with an existing command**
-Choose a different `jump` value in `locations.json`. All aliases in this system use the `j` prefix to avoid conflicts.
+```bash
+mkdir -p ~/.oh-my-zsh/custom
+```
+Then re-run Step 6.
 
 ---
 
 ## Future
 
-This repo is a standalone bash implementation of the [AppyDave jump system](https://github.com/appydave-labs).
-
-When the `appydave-tools` Ruby gem becomes publicly available, you can replace `generate-aliases.sh` with:
+This is a standalone bash implementation. When the `appydave-tools` Ruby gem becomes available, replace `generate-aliases.sh` with:
 
 ```bash
 jump generate aliases
